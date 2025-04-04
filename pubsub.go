@@ -590,6 +590,12 @@ func newChannel(pubSub *PubSub, opts ...ChannelOption) *channel {
 	return c
 }
 
+func (c *channel) SafeString() string {
+	c.pubSub.mu.Lock()
+	defer c.pubSub.mu.Unlock()
+	return fmt.Sprintf("%s", c)
+}
+
 func (c *channel) initHealthCheck() {
 	ctx := context.TODO()
 	c.ping = make(chan struct{}, 1)
@@ -665,7 +671,7 @@ func (c *channel) initMsgChan() {
 				case <-timer.C:
 					internal.Logger.Printf(
 						ctx, "redis: %s channel is full for %s (message is dropped)",
-						c, c.chanSendTimeout)
+						c.SafeString(), c.chanSendTimeout)
 				}
 			default:
 				internal.Logger.Printf(ctx, "redis: unknown message type: %T", msg)
@@ -719,7 +725,7 @@ func (c *channel) initAllChan() {
 				case <-timer.C:
 					internal.Logger.Printf(
 						ctx, "redis: %s channel is full for %s (message is dropped)",
-						c, c.chanSendTimeout)
+						c.SafeString(), c.chanSendTimeout)
 				}
 			default:
 				internal.Logger.Printf(ctx, "redis: unknown message type: %T", msg)
